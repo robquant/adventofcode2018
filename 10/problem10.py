@@ -1,16 +1,9 @@
-
+import re
 import sys
 
 def parse_line(line):
-    first_open_bracket = line.find("<")
-    first_comma = line.find(",")
-    first_close_bracket = line.find(">")
-    second_open_bracket = line.find("<", first_close_bracket)
-    second_comma = line.find(",", second_open_bracket)
-    second_close_bracked = line.find(">", second_comma)
-    pos = (int(line[first_open_bracket+1:first_comma]), int(line[first_comma+1: first_close_bracket]))
-    vel = (int(line[second_open_bracket+1:second_comma]), int(line[second_comma+1: second_close_bracked]))
-    return pos, vel
+    res = tuple(map(int, re.findall(r"[-\d]+", line)))
+    return res[:2], res[2:]
 
 def move(particle_pos, particle_vel):
     return [(p[0]+v[0], p[1]+v[1]) for p, v in zip(particle_pos, particle_vel)]
