@@ -24,20 +24,35 @@ def test_power():
     assert power((217,196), 39) == 0
     assert power((101,153), 71) == 4
 
-def max_rectangle(field, size):
+
+def cumsum(field):
+    res = []
+    for row in field:
+        s = 0
+        rowsum = []
+        for el in row:
+            s += el
+            rowsum.append(s)
+        res.append(rowsum)
+    return res
+
+def max_rectangle(cumsums, size):
     size_x, size_y = size
     max_sum = -9999
     max_coords = None
     for x in range(0, 301 - size_x):
         for y in range(0, 301 - size_y):
             s = 0
-            for i in range(x, x + size_x):
-                for j in range(y, y + size_y):
-                    s += field[j][i]
+            for j in range(y, y + size_y):
+                if x == 0:
+                    s += cumsums[j][x + size_x - 1]
+                else:
+                    s += cumsums[j][x + size_x - 1] - cumsums[j][x - 1]
             if s > max_sum:
                 max_sum = s
                 max_coords = (x, y)
     return max_coords, max_sum
+
 
 def fill_field(serial):
     field = [[0] * 300 for _ in range(300)]
@@ -49,7 +64,8 @@ def fill_field(serial):
 if __name__ == "__main__":
     serial = 2187
     field = fill_field(serial)
-    coords, max_sum = max_rectangle(field, (3,3))
+    cumsum_field = cumsum(field)
+    coords, max_sum = max_rectangle(cumsum_field, (3,3))
     x,y = coords
     print(x+1, y+1)
 
@@ -58,7 +74,7 @@ if __name__ == "__main__":
     rect_size = None
     for size in range(1, 301):
         print(size)
-        coords, sum = max_rectangle(field, (size, size))
+        coords, sum = max_rectangle(cumsum_field, (size, size))
         if sum > max_sum:
             max_sum = sum
             max_coords = coords
