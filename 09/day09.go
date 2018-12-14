@@ -27,21 +27,39 @@ func remove(current *node) *node {
 	return removed
 }
 
-func main() {
-	last_marble := 1618
-	players := 10
+func print(start *node) {
+	run := start
+	fmt.Printf("%d->", run.value)
+	run = run.next
+	for ; run != start; run = run.next {
+		fmt.Printf("%d->", run.value)
+	}
+	fmt.Printf("\n")
+}
+
+func highscore(scores map[int]int) int {
+	score := 0
+	for _, v := range scores {
+		if v > score {
+			score = v
+		}
+	}
+	return score
+}
+
+func play(lastMarble, players int) int {
 	scores := make(map[int]int)
 	current := &node{value: 0}
 	current.next = current
 	current.prev = current
-	for stone := 1; stone <= last_marble; stone++ {
+	for stone := 1; stone <= lastMarble; stone++ {
 		player := stone % players
 		if stone%23 == 0 {
 			for i := 0; i < 6; i++ {
 				current = current.prev
 			}
 			removed := remove(current)
-			if val, ok := scores[stone]; ok {
+			if val, ok := scores[player]; ok {
 				scores[player] = val + stone + removed.value
 			} else {
 				scores[player] = stone + removed.value
@@ -51,6 +69,12 @@ func main() {
 			insert(current.next, node)
 			current = node
 		}
+		// print(current)
 	}
-	fmt.Printf("%v\n", scores)
+	return highscore(scores)
+}
+
+func main() {
+	fmt.Printf("%v\n", play(71240, 478))
+	fmt.Printf("%v\n", play(71240*100, 478))
 }
