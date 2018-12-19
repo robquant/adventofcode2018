@@ -163,20 +163,21 @@ func main() {
 
 	samples := readInput("input.txt")
 	fmt.Printf("Number of samples: %d\n", len(samples))
-	total := 0
+	moreThanThreeInterp := 0
 	for _, sample := range samples {
-		validOpcodes := 0
+		validOpcodes := make([]opcode, 0)
 		for _, opcode := range opcodes {
 			var input [4]int
 			copy(input[:], sample.input[:])
 			opcode(&input, sample.opcodes[1], sample.opcodes[2], sample.opcodes[3])
 			if equal(sample.output, input) {
-				validOpcodes += 1
+				validOpcodes = append(validOpcodes, opcode)
 			}
 		}
-		if validOpcodes >= 3 {
-			total += 1
+		if len(validOpcodes) >= 3 {
+			moreThanThreeInterp++
 		}
 	}
-	fmt.Printf("%d\n", total)
+	fmt.Printf("%d\n", moreThanThreeInterp)
+
 }
