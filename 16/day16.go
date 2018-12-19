@@ -107,8 +107,14 @@ func equal(a, b [4]int) bool {
 	return true
 }
 
+type Instruction struct {
+	opcode int
+	params [3]int
+}
+
 type Sample struct {
-	input, output, opcodes [4]int
+	input, output [4]int
+	Instruction
 }
 
 func readInput(filename string) []Sample {
@@ -150,11 +156,95 @@ func readInput(filename string) []Sample {
 				if err != nil {
 					log.Fatal(err)
 				}
-				sample.opcodes[i] = number
+				if i == 0 {
+					sample.opcode = number
+				} else {
+					sample.params[i-1] = number
+				}
 			}
 		}
 	}
 	return samples
+}
+
+func readProgram(filename string) []Instruction {
+	instructions := make([]Instruction, 0)
+	ins := Instruction{}
+	input, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, line := range strings.Split(string(input), "\n") {
+		if len(line) == 0 {
+			continue
+		}
+		for i, numberstr := range strings.Split(line, " ") {
+			number, err := strconv.Atoi(strings.TrimSpace(numberstr))
+			if err != nil {
+				log.Fatal(err)
+			}
+			if i == 0 {
+				ins.opcode = number
+			} else {
+				ins.params[i-1] = number
+			}
+		}
+		instructions = append(instructions, ins)
+	}
+	return instructions
+}
+
+func run(program []Instruction, opcodeToFuncIndex map[int]int, opcodes []opcode) [4]int {
+	regs := [4]int{}
+	for _, ins := range program {
+		op := opcodes[opcodeToFuncIndex[ins.opcode]]
+		op(&regs, ins.params[0], ins.params[1], ins.params[2])
+	}
+	return regs
+}
+
+func union(a, b []int) []int {
+	res := make([]int, 0)
+	for _, vala := range a {
+		for _, valb := range b {
+			if vala == valb {
+				res = append(res, vala)
+			}
+		}
+	}
+	return res
+}
+
+func collaps(opcodeToFuncIndex map[int][]int) map[int]int {
+	res := make(map[int]int)
+	for {
+		single := -1
+		for k, v := range opcodeToFuncIndex {
+			if len(v) == 1 {
+				res[k] = v[0]
+				single = v[0]
+				delete(opcodeToFuncIndex, k)
+				break
+			}
+		}
+		if single >= 0 {
+			for k, v := range opcodeToFuncIndex {
+				// Remove single from v
+				found := -1
+				for i, val := range v {
+					if val == single {
+						found = i
+						break
+					}
+				}
+				if found >= 0 {
+					opcodeToFuncIndex[k] = append(v[:found], v[found+1:]...)
+				}
+			}
+		} else {
+			return res
+		}
+	}
 }
 
 func main() {
@@ -164,20 +254,29 @@ func main() {
 	samples := readInput("input.txt")
 	fmt.Printf("Number of samples: %d\n", len(samples))
 	moreThanThreeInterp := 0
+	opcodeToFuncIndexList := make(map[int][]int)
+	allOpcodes := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	for i := 0; i < 16; i++ {
+		opcodeToFuncIndexList[i] = append([]int{}, allOpcodes...)
+	}
 	for _, sample := range samples {
-		validOpcodes := make([]opcode, 0)
-		for _, opcode := range opcodes {
+		validOpcodes := make([]int, 0)
+		for opcodeIndex, opcode := range opcodes {
 			var input [4]int
 			copy(input[:], sample.input[:])
-			opcode(&input, sample.opcodes[1], sample.opcodes[2], sample.opcodes[3])
+			opcode(&input, sample.params[0], sample.params[1], sample.params[2])
 			if equal(sample.output, input) {
-				validOpcodes = append(validOpcodes, opcode)
+				validOpcodes = append(validOpcodes, opcodeIndex)
 			}
 		}
 		if len(validOpcodes) >= 3 {
 			moreThanThreeInterp++
 		}
+		opcodeToFuncIndexList[sample.opcode] = union(opcodeToFuncIndexList[sample.opcode], validOpcodes)
 	}
 	fmt.Printf("%d\n", moreThanThreeInterp)
-
+	opcodeToFuncIndex := collaps(opcodeToFuncIndexList)
+	program := readProgram("input2.txt")
+	finalRegs := run(program, opcodeToFuncIndex, opcodes)
+	fmt.Printf("%v\n", finalRegs)
 }
