@@ -135,8 +135,8 @@ func readProgram(filename string, opcodes map[string]opcode) []Instruction {
 	return instructions
 }
 
-func run(program []Instruction, ipReg int) registers {
-	regs := registers{1, 0, 0, 0, 0, 0}
+func run(program []Instruction, ipReg, start int, printStats bool) registers {
+	regs := registers{start, 0, 0, 0, 0, 0}
 	ip := 0
 	counter := 0
 	stats := make(map[int]int)
@@ -144,12 +144,18 @@ func run(program []Instruction, ipReg int) registers {
 		stats[i] = 0
 	}
 	for ; ip < len(program); ip++ {
-		if counter%1000000 == 0 {
+		if printStats && counter%1000000 == 0 {
 			for i := 0; i < len(program); i++ {
 				fmt.Printf("%d: %f\n", i, float64(stats[i])/float64(counter)*100)
 			}
 		}
 		stats[ip]++
+		if ip == 3 {
+			if regs[2] != 0 && regs[1]%regs[2] == 0 {
+				regs[0] += regs[2]
+			}
+			ip = 12
+		}
 		ins := program[ip]
 		regs[ipReg] = ip
 		ins.opcode(&regs, ins.params[0], ins.params[1], ins.params[2])
@@ -181,6 +187,6 @@ func main() {
 	}
 
 	program := readProgram("input.txt", opcodes)
-	finalRegs := run(program, 5)
-	fmt.Printf("%v\n", finalRegs)
+	fmt.Printf("%v\n", run(program, 5, 0, false))
+	fmt.Printf("%v\n", run(program, 5, 1, false))
 }
