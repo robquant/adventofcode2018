@@ -4,13 +4,19 @@ from collections import namedtuple
 
 Particle = namedtuple("Particle", ["x", "y", "z", "r"])
 
+
 def dist(p1, p2):
-    return abs(p1.x - p2.x) + abs(p1.y - p2.y) + abs(p1.z - p2.z) 
+    return abs(p1.x - p2.x) + abs(p1.y - p2.y) + abs(p1.z - p2.z)
+
 
 particles = []
 max_particle = None
+sum_x, sum_y, sum_z = 0.0, 0.0, 0.0
 for line in open(sys.argv[1]):
-    x,y,z,r = tuple(map(int, re.findall("-?\d+", line)))
+    x, y, z, r = tuple(map(int, re.findall("-?\d+", line)))
+    sum_x += x
+    sum_y += y
+    sum_z += z
     particle = Particle(x, y, z, r)
     if max_particle is None or particle.r >= max_particle.r:
         max_particle = Particle(*particle)
